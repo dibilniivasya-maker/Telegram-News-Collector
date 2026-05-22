@@ -22,4 +22,5 @@ Right now the prompt (stored on line 42) is calibrated to my special needs. But 
 The original prompt may break with other languages, I did not test that. Llama is quite dumb when it comes to languages
 
 I lowk like this shit. It's neat. I like it as a first python project
+
 If you have any further questions text me over at @ElPhrog on telegram or laphroq on discord
