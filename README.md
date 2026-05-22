@@ -12,13 +12,14 @@ The program runs in cmd 'cause I can't be FUCKED making an interface for that sh
 The way it works is rather simple:
 1. Takes all of your archived channels
 2. Pulls out all unread messages from those
-3. Runs them through an LLM that determines if they're news worthy or not
+3. Runs them through LLMs that determines if they're news worthy or not (each message is its own request)
 4. If they are, it logs them in a text file "output.txt" alongside a link to them
 5. At the end it reports how much money you spent and how many messages it went through
 (The money counting IS a little bad at the moment, I may fix it in the future)
 Any info about you specifically does not go to the LLM, if you're concerned about it
 
 Right now the prompt (stored on line 42) is calibrated to my special needs. But the prompt is literally just letters so it's easy to replace it. Again, line 42, giant block of text. Won't miss it
+The original prompt may break with other languages, I did not test that. Llama is quite dumb when it comes to languages
 
 I lowk like this shit. It's neat. I like it as a first python project
 If you have any further questions text me over at @ElPhrog on telegram or laphroq on discord
