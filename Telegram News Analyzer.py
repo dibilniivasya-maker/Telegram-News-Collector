@@ -23,20 +23,18 @@ semaphore = asyncio.Semaphore(5)
 
 client = OpenRouter(api_key=OPENROUTER_KEY)
 
+mcount = 0
 async def process_dialog(dialog):
     global price, count
     global mcount
-    mcount = 0
     async with semaphore:
         try:
-            fetch = await telegram.get_messages(dialog,limit=1)
             message_zero = await telegram.get_messages(
                 dialog,
-                limit=fetch[0].id - dialog.dialog.read_inbox_max_id,
+                min_id = dialog.dialog.read_inbox_max_id,
+                reverse=True,
             )
-            for i in message_zero:
-                if not message_zero:
-                    return
+            for i in message_zero:                
 
                 text = """Ты — фильтр новостей Minecraft Telegram-каналов.
 
@@ -65,15 +63,15 @@ async def process_dialog(dialog):
 
     Если есть сомнения — отвечай НЕТ.
 
-    Сообщение:""" + i.text
+    Сообщение: \n""" + i.text
 
-                if len(i.text) <= 0:
+                if len(i.text) <= 30:
                     continue
 
                 # run blocking OpenRouter call in thread
                 response = await asyncio.to_thread(
                     lambda: client.chat.send(
-                        model="meta-llama/llama-3.1-8b-instruct",
+                        model="deepseek/deepseek-v4-flash",
                         messages=[
                             {
                                 "role": "user",
@@ -99,8 +97,6 @@ async def process_dialog(dialog):
                     entity = await telegram.get_entity(dialog)
                     olink = f"https://t.me/{entity.username}/{i.id}"
                     output.append(olink + "\n" + i.text + "\n" + "-------" + "\n")
-                    with open('output.txt', 'w', encoding='utf-8') as file:
-                        file.writelines(output)
                 mcount += 1;
 
             async with lock:
@@ -132,6 +128,9 @@ async def main():
             tasks.append(asyncio.create_task(process_dialog(dialog)))
 
     await asyncio.gather(*tasks)
+    
+    with open('output.txt', 'w', encoding='utf-8') as file:
+                        file.writelines(output)
     
     print('$' + str(price) + '\n' + str(mcount))
 
