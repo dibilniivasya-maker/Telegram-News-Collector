@@ -2,23 +2,26 @@ import asyncio
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
 from openrouter import OpenRouter
+from telethon import utils
 
-api_id = 0
+api_id = 
 api_hash = ""
-OPENROUTER_KEY = ""
 
 telegram = TelegramClient("telegram", api_id, api_hash)
-client = OpenRouter(api_key=OPENROUTER_KEY)
 
-semaphore = asyncio.Semaphore(5)
+OPENROUTER_KEY = ""
+
+output = []
+price = 0
+global price_input
+global price_output
+count = 0
 lock = asyncio.Lock()
 
-total_price = 0.0
-total_messages = 0
+# limit concurrent tasks
+semaphore = asyncio.Semaphore(5)
 
-FILTER_PROMPT = """Ты — фильтр новостей Minecraft Telegram-каналов.
-Определи, является ли сообщение интересной новостью.
-Ответ — ТОЛЬКО одно слово: ДА или НЕТ. Любой другой текст запрещён.
+client = OpenRouter(api_key=OPENROUTER_KEY)
 
 mcount = 0
 async def process_dialog(dialog):
@@ -33,40 +36,32 @@ async def process_dialog(dialog):
             )
             for i in message_zero:                
 
+                text = """Ты — фильтр новостей Minecraft Telegram-каналов.
 
-def calc_price(usage) -> float:
-    input_cost = usage.prompt_tokens / 1_000_000 * 0.02
-    output_cost = usage.completion_tokens / 1_000_000 * 0.05
-    return input_cost + output_cost
+    Твоя задача: определить, является ли сообщение интересной новостью.
 
+    Ответ должен содержать ТОЛЬКО одно слово:
+    ДА
+    или
+    НЕТ
 
-async def classify_message(text: str) -> tuple[str, float]:
-    """Возвращает (решение, стоимость)."""
-    response = await asyncio.to_thread(
-        client.chat.send,
-        model="meta-llama/llama-3.1-8b-instruct",
-        messages=[{"role": "user", "content": FILTER_PROMPT + text}],
-    )
-    return response.choices[0].message.content.strip().lower(), calc_price(response.usage)
+    Любой другой текст запрещён.
 
+    Отвечай НЕТ, если сообщение:
+    - является анонсом стрима, видео или трансляции;
+    - связано с личной жизнью;
+    - поздравляет с днём рождения;
+    - является рекламой, оффтопом или обычным общением;
+    - не связано напрямую с Minecraft.
 
-async def process_dialog(dialog, out_file):
-    global total_price, total_messages
+    Отвечай ДА, если сообщение:
+    - содержит важные события;
+    - рассказывает о драмах, конфликтах или расследованиях;
+    - сообщает о достижениях игроков;
+    - содержит значимые новости сообщества;
+    - связано с крупными Minecraft-проектами, серверами, турнирами или игроками.
 
-    async with semaphore:
-        try:
-            entity = await telegram.get_entity(dialog)
-            username = getattr(entity, "username", entity.id)
-
-            # Получаем только непрочитанные сообщения
-            unread_messages = await telegram.get_messages(
-                dialog,
-                min_id=dialog.dialog.read_inbox_max_id,
-                limit=None,
-            )
-
-            if not unread_messages:
-                return
+    Если есть сомнения — отвечай НЕТ.
 
     Сообщение: \n""" + i.text
 
@@ -105,26 +100,32 @@ async def process_dialog(dialog, out_file):
                 mcount += 1;
 
             async with lock:
-                total_price += dialog_price
-                total_messages += dialog_count
+                price += price_input + price_output
+                count += 1
+                entity = await telegram.get_entity(dialog)
+                print(
+                    f'Message: https://t.me/{entity.username}/{i.id} \n'
+                    f'Output: "{response.choices[0].message.content}"\n'
+                    f'Price: ${price:.8f}\n'
+                )
 
         except FloodWaitError as e:
-            print(f"[flood] Ждём {e.seconds}s")
+            print(f"Flood wait: sleeping {e.seconds}s")
             await asyncio.sleep(e.seconds)
-        except Exception as e:
-            print(f"[error] {dialog.name}: {e}")
 
+        except Exception as e:
+            print(f"Error: {e}")
 
 async def main():
-    with open("output.txt", "a", encoding="utf-8") as out_file:
-        tasks = [
-            asyncio.create_task(process_dialog(dialog, out_file))
-            async for dialog in telegram.iter_dialogs()
-            if dialog.is_channel
+    tasks = []
+
+    async for dialog in telegram.iter_dialogs():
+        if (
+            dialog.is_channel
             and dialog.archived
             and dialog.unread_count != 0
-        ]
-        await asyncio.gather(*tasks)
+        ):
+            tasks.append(asyncio.create_task(process_dialog(dialog)))
 
     await asyncio.gather(*tasks)
     
