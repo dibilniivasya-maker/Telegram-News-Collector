@@ -1,8 +1,6 @@
-This script was made in roughly 7 hours with very little AI invovled by a guy that barely knows how to code and has no experience in python
-
-Now, to actually run this thing you need three things:
+To actually run this thing you need three things:
 1. A telegram api and hash. Those you can get under "Api Development Tools" on https://my.telegram.org
-2. An OpenRouter account. Those are actually free over at https://openrouter.ai. But in the code by default I put DeepSeek V4 flash which is NOT FREE.
+2. An OpenRouter account. Those are actually free over at https://openrouter.ai
 If you want to use a free LLM (such as deepseek V4 flash (free) you will need to manualy change the "model" value to your preferred model (a good one is "deepseek/deepseek-v4-flash:free")
 
 Once you have those, you will need to paste your telegram api, telegram hash and OpenRouter key into their respective values
@@ -19,7 +17,5 @@ The way it works is rather simple:
 Any info about you specifically does not go to the LLM, if you're concerned about it
 
 Right now the prompt is calibrated to my special needs. But the prompt is literally just letters so it's easy to replace it. Giant block of text. Won't miss ites
-
-I lowk like this shit. It's neat. I like it as a first python project
 
 If you have any further questions text me over at @ElPhrog on telegram or laphroq on discord
