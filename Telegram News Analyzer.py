@@ -33,6 +33,7 @@ async def process_dialog(dialog):
                 dialog,
                 min_id = dialog.dialog.read_inbox_max_id,
                 reverse=True,
+                limit = None,
             )
             for i in message_zero:                
 
@@ -71,7 +72,7 @@ async def process_dialog(dialog):
                 # run blocking OpenRouter call in thread
                 response = await asyncio.to_thread(
                     lambda: client.chat.send(
-                        model="deepseek/deepseek-v4-flash",
+                        model="deepseek/deepseek-r1-distill-llama-70b",
                         messages=[
                             {
                                 "role": "user",
