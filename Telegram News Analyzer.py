@@ -20,11 +20,18 @@ FILTER_PROMPT = """Ты — фильтр новостей Minecraft Telegram-к�
 Определи, является ли сообщение интересной новостью.
 Ответ — ТОЛЬКО одно слово: ДА или НЕТ. Любой другой текст запрещён.
 
-Отвечай НЕТ: анонс стрима/видео, личная жизнь, поздравления, реклама, оффтоп, не Minecraft.
-Отвечай ДА: важные события, драмы, конфликты, достижения, новости сообщества, серверы, турниры.
-При сомнениях — НЕТ.
-
-Сообщение:"""
+mcount = 0
+async def process_dialog(dialog):
+    global price, count
+    global mcount
+    async with semaphore:
+        try:
+            message_zero = await telegram.get_messages(
+                dialog,
+                min_id = dialog.dialog.read_inbox_max_id,
+                reverse=True,
+            )
+            for i in message_zero:                
 
 
 def calc_price(usage) -> float:
@@ -61,25 +68,41 @@ async def process_dialog(dialog, out_file):
             if not unread_messages:
                 return
 
-            dialog_price = 0.0
-            dialog_count = 0
+    Сообщение: \n""" + i.text
 
-            for msg in unread_messages:
-                if not msg.text or len(msg.text.strip()) == 0:
+                if len(i.text) <= 30:
                     continue
 
-                decision, msg_price = await classify_message(msg.text)
-                dialog_price += msg_price
-                dialog_count += 1
+                # run blocking OpenRouter call in thread
+                response = await asyncio.to_thread(
+                    lambda: client.chat.send(
+                        model="deepseek/deepseek-v4-flash",
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": text
+                            }
+                        ],
+                    )
+                )
+                
+                price_input = (
+                    float(response.usage.completion_tokens)
+                    / 1_000_000
+                    * 0.05
+                )
 
-                link = f"https://t.me/{username}/{msg.id}"
-
-                if decision == "да":
-                    line = f"{link}\n{msg.text}\n-------\n"
-                    await asyncio.to_thread(out_file.write, line)
-                    print(f"[+] {link}")
-
-                print(f"    {link} → {decision} (${msg_price:.8f})")
+                price_output = (
+                    float(response.usage.prompt_tokens)
+                    / 1_000_000
+                    * 0.02
+                )
+                
+                if response.choices[0].message.content.lower() == "да":
+                    entity = await telegram.get_entity(dialog)
+                    olink = f"https://t.me/{entity.username}/{i.id}"
+                    output.append(olink + "\n" + i.text + "\n" + "-------" + "\n")
+                mcount += 1;
 
             async with lock:
                 total_price += dialog_price
@@ -103,7 +126,12 @@ async def main():
         ]
         await asyncio.gather(*tasks)
 
-    print(f"\nИтого: ${total_price:.6f}, обработано сообщений: {total_messages}")
+    await asyncio.gather(*tasks)
+    
+    with open('output.txt', 'w', encoding='utf-8') as file:
+                        file.writelines(output)
+    
+    print('$' + str(price) + '\n' + str(mcount))
 
 
 with telegram:
