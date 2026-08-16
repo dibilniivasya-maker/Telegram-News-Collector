@@ -12,7 +12,7 @@ The way it works is rather simple:
 1. A telegram api and hash. Those you can get under "Api Development Tools" on https://my.telegram.org
 2. Openrouter api key. To get one, you go to https://openrouter.ai and click on "Get API key"
 ### Once you have all these
-You will need to open the code (I reccomend via Notepad++), and paste your api_id, api_hash and
+You will need to open the code (I reccomend via Notepad++), and paste your api_id, api_hash and openrouter key into their respective values. All located in the very beginning of the file
 ## And then you need to install three things
 1. Install python, if you didn't do that yet, from https://www.python.org/downloads/
 2. Install Telethon. Instructions on how to do that on https://docs.telethon.dev/en/stable/basic/installation.html
