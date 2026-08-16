@@ -62,7 +62,7 @@ async def process_dialog(dialog):
     - содержит значимые новости сообщества;
     - связано с крупными Minecraft-проектами, серверами, турнирами или игроками.
 
-    Если есть сомнения — отвечай НЕТ.
+    Если есть сомнения — отвечай ДА.
 
     Сообщение: \n""" + i.text
 
@@ -72,7 +72,7 @@ async def process_dialog(dialog):
                 # run blocking OpenRouter call in thread
                 response = await asyncio.to_thread(
                     lambda: client.chat.send(
-                        model="deepseek/deepseek-r1-distill-llama-70b",
+                        model="deepseek/deepseek-v4-flash",
                         messages=[
                             {
                                 "role": "user",
@@ -99,7 +99,7 @@ async def process_dialog(dialog):
                     olink = f"https://t.me/{entity.username}/{i.id}"
                     output.append(olink + "\n" + i.text + "\n" + "-------" + "\n")
                 mcount += 1;
-
+            
             async with lock:
                 price += price_input + price_output
                 count += 1
@@ -109,7 +109,8 @@ async def process_dialog(dialog):
                     f'Output: "{response.choices[0].message.content}"\n'
                     f'Price: ${price:.8f}\n'
                 )
-
+            await telegram.send_read_acknowledge(dialog, max_id=message_zero[-1].id)
+                
         except FloodWaitError as e:
             print(f"Flood wait: sleeping {e.seconds}s")
             await asyncio.sleep(e.seconds)
