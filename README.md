@@ -4,7 +4,7 @@ The way it works is rather simple:
 2. Pulls out all unread messages from those
 3. Runs them through LLMs that determines if they're news worthy or not (each message is its own request)
 4. If they are, it logs them in a text file "output.txt" alongside a link to them
-5. At the end it reports how much money you spent and how many messages it went through (very innacurate at the moment)
+5. At the end should log how many messages it read, but I didn't test the accuracy. It's prolly wrong
 ### YES, it uses generative AI, but only as a filter
 
 # How to run for the first time
